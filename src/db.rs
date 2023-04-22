@@ -9,7 +9,13 @@ use crate::schema::mayor;
 use crate::schema::mayor::dsl::*;
 
 pub struct Db {
-    connection: SqliteConnection,
+    pub connection: SqliteConnection,
+}
+
+impl Default for Db {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Db {
@@ -39,11 +45,12 @@ impl Db {
             .load::<Config>(&mut self.connection)
             .expect("Cannot fetch config...");
 
-        if result.len() >= 1 {
+        if !result.is_empty() {
             let config = result[0].clone();
             return Some(config);
         }
-        return None;
+
+        None
     }
 
     pub fn _update_config(&mut self, config: Config) -> Result<usize, Error> {

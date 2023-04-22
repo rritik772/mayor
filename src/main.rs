@@ -1,13 +1,33 @@
 use clap::Parser;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use dotenv::dotenv;
-use std::io;
+use std::{env, io, path::Path, process::Command};
 
-use config::NewConfig;
+use config::{Config, NewConfig};
 use db::Db;
 
 mod config;
 mod db;
 mod schema;
+
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+
+fn handle_config(config: Config) -> io::Result<()> {
+    // cd into root_path
+    env::set_current_dir(Path::new(&config.root_path)).expect("Cannot cd into root_path");
+
+    // open file in editor
+    if let Ok(editor) = env::var("EDITOR") {
+        let cmd = format!("{}/{}", config.root_path, config.file);
+
+        Command::new(editor)
+            .arg(cmd)
+            .status()
+            .expect("Cannot execute command");
+        return Ok(());
+    }
+    panic!("Cannot find EDITOR variable from enviroment...");
+}
 
 fn main() -> io::Result<()> {
     dotenv().ok();
@@ -19,9 +39,15 @@ fn main() -> io::Result<()> {
     let specifier = args.specifier;
     let mut connection = Db::new();
 
+    // migrations
+    connection
+        .connection
+        .run_pending_migrations(MIGRATIONS)
+        .unwrap();
+
     if root_path.is_none() && file.is_none() {
         if let Some(config) = NewConfig::fetch_from_database(&mut connection, &specifier) {
-            println!("Config found: {}", config.root_path);
+            handle_config(config).unwrap();
         } else {
             println!("Config doesn't exist...")
         }
@@ -34,7 +60,7 @@ fn main() -> io::Result<()> {
         file,
     };
 
-    if let Ok(_) = new_config.save_to_database(&mut connection) {
+    if new_config.save_to_database(&mut connection).is_ok() {
         println!("New Config inserted...");
     } else {
         println!("Cannot insert config");

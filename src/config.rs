@@ -38,11 +38,8 @@ impl NewConfig {
         }
     }
 
-    pub fn save_to_database(
-        &self,
-        mut connection: &mut Db,
-    ) -> Result<usize, diesel::result::Error> {
-        Db::insert_config(&mut connection, self)
+    pub fn save_to_database(&self, connection: &mut Db) -> Result<usize, diesel::result::Error> {
+        Db::insert_config(connection, self)
     }
 
     pub fn _update_config(&self, mut _connection: &mut Db) -> Result<usize, diesel::result::Error> {
@@ -51,13 +48,12 @@ impl NewConfig {
 
     pub fn delete_from_database(
         &self,
-        mut connection: &mut Db,
+        connection: &mut Db,
     ) -> Result<usize, diesel::result::Error> {
-        Db::delete_config(&mut connection, &self.specifier)
+        Db::delete_config(connection, &self.specifier)
     }
 
-    pub fn fetch_from_database(mut connection: &mut Db, specifier: &String) -> Option<Config> {
-        let config = Db::fetch_config(&mut connection, &specifier);
-        config
+    pub fn fetch_from_database(connection: &mut Db, specifier: &String) -> Option<Config> {
+        Db::fetch_config(connection, specifier)
     }
 }
