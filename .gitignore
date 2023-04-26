@@ -1,3 +1,4 @@
 /target/
 /mayor.sqlite3
 /src/mayor.sqlite3
+/.env

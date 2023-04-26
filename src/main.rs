@@ -8,6 +8,7 @@ use db::Db;
 
 mod config;
 mod db;
+mod init;
 mod schema;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
@@ -32,12 +33,14 @@ fn handle_config(config: Config) -> io::Result<()> {
 fn main() -> io::Result<()> {
     dotenv().ok();
 
+    let path = init::check_path().expect("_MAYOR_DB variable not found");
+
     let args = NewConfig::parse();
 
     let root_path = args.root_path;
     let file = args.file;
     let specifier = args.specifier;
-    let mut connection = Db::new();
+    let mut connection = Db::new(&path);
 
     // migrations
     connection

@@ -3,7 +3,6 @@ use crate::config::{Config, NewConfig};
 use diesel::{
     result::Error, sqlite::SqliteConnection, Connection, ExpressionMethods, QueryDsl, RunQueryDsl,
 };
-use std::env;
 
 use crate::schema::mayor;
 use crate::schema::mayor::dsl::*;
@@ -12,18 +11,10 @@ pub struct Db {
     pub connection: SqliteConnection,
 }
 
-impl Default for Db {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Db {
-    pub fn new() -> Self {
-        let database_url =
-            env::var("DATABASE_URL").expect("Cannot get Database url in ENV file...");
-
-        let connection = SqliteConnection::establish(&database_url)
+    pub fn new(path: &str) -> Self {
+        let path = format!("{path}/mayor_db.db");
+        let connection = SqliteConnection::establish(&path)
             .unwrap_or_else(|_| panic!("Cannot connect to database..."));
 
         Self { connection }
